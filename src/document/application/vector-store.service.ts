@@ -110,14 +110,22 @@ export class VectorStoreService {
       // ----------------------------
       // ⭐ Gemini Summarization Step
       // ----------------------------
-      const genAI = new GoogleGenerativeAI(this.configService.get<string>('gemini.apiKey') || '');
-  
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash", // or gemini-1.5-flash for cheaper + faster
-      });
+      const genAI = new GoogleGenerativeAI(
+        this.configService.get<string>("gemini.apiKey") || "",
+      );
+
+      // Use a config-driven model name with a safe default that is supported
+      // by the Google Generative AI API for text generation.
+      const generationModel =
+        this.configService.get<string>("gemini.generationModel") ||
+        // "models/text-bison-001" is a stable text generation model name supported
+        // by Google Generative AI. Adjust via env GEMINI_GENERATION_MODEL if needed.
+        "models/text-bison-001";
+
+      const model = genAI.getGenerativeModel({ model: generationModel });
   
       const context = filteredResults
-        .map(doc => doc.pageContent)
+        .map((doc) => doc.pageContent)
         .join("\n\n");
   
       const prompt = `
@@ -132,15 +140,37 @@ export class VectorStoreService {
         Do NOT make up anything that is not in the context.
       `;
   
+      // generateContent returns a structured result; use .response.text() when
+      // available but guard for other response shapes.
       const result = await model.generateContent(prompt);
-      const answer = result.response.text();
+      // Helper: attempt to extract text from known response shapes
+      const extractText = (res: unknown): string | undefined => {
+        const r = res as any;
+        if (r?.response && typeof r.response.text === "function") {
+          try {
+            return r.response.text();
+          } catch {
+            // fallthrough
+          }
+        }
+        if (Array.isArray(r?.candidates) && r.candidates[0]?.content) {
+          return r.candidates[0].content;
+        }
+        if (r?.output && typeof r.output === "string") {
+          return r.output;
+        }
+        return undefined;
+      };
+
+      const answer = extractText(result) || "No answer generated.";
   
       return {
         answer,
         sources: filteredResults,
       };
   
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       this.logger.error(
         `Error performing similarity search: ${error.message}`,
         error.stack,

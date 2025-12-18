@@ -1,10 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { users } from '../db/schema';
-import { DRIZZLE } from '../db/drizzle.module';
-import { CreateUserDto } from './dto/create-user-dto';
-import { eq } from 'drizzle-orm';
+import { Inject, Injectable } from "@nestjs/common";
+import { users } from "../db/schema";
+import { DRIZZLE } from "../db/drizzle.module";
+import { CreateUserDto } from "./dto/create-user-dto";
+import { eq } from "drizzle-orm";
 
-type DrizzleDb = import('drizzle-orm/node-postgres').NodePgDatabase;
+type DrizzleDb = import("drizzle-orm/node-postgres").NodePgDatabase;
 
 @Injectable()
 export class UserService {
@@ -18,7 +18,7 @@ export class UserService {
         .limit(1);
 
       if (isExistingUser.length) {
-        throw new Error('User with this email already exists');
+        throw new Error("User with this email already exists");
       }
 
       const newUser = await this.db
@@ -31,7 +31,7 @@ export class UserService {
         .returning();
       return newUser;
     } catch (err) {
-      console.error('Error creating user:', err);
+      console.error("Error creating user:", err);
       throw err;
     }
   }

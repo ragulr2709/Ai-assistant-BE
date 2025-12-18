@@ -1,17 +1,14 @@
-import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
-import { ChatService } from './chat.services';
-import { JwtAuthGuard } from '../auth/jwt.guard';
+import { Controller, Get, Query, UseGuards, Request } from "@nestjs/common";
+import { ChatService } from "./chat.services";
+import { JwtAuthGuard } from "../auth/jwt.guard";
 
-@Controller('chats')
+@Controller("chats")
 @UseGuards(JwtAuthGuard)
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
-  async getChats(
-    @Request() req,
-    @Query('sessionId') sessionId?: string,
-  ) {
+  async getChats(@Request() req, @Query("sessionId") sessionId?: string) {
     console.log(sessionId);
     console.log(req.user);
     const userId = req.user.id;
@@ -25,10 +22,10 @@ export class ChatController {
     }
   }
 
-  @Get('session')
-  async getChatsBySession(@Query('sessionId') sessionId: string) {
+  @Get("session")
+  async getChatsBySession(@Query("sessionId") sessionId: string) {
     if (!sessionId) {
-      throw new Error('sessionId is required');
+      throw new Error("sessionId is required");
     }
     return this.chatService.getChatsBySession(sessionId);
   }
