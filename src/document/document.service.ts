@@ -9,7 +9,7 @@ import { VectorStoreService } from './application/vector-store.service';
 import { DocumentResponseDto, QueryResultDto } from './dto/document-response.dto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { chatMessages } from 'src/db/chats';
+import { chatMessages } from '../db/chats';
 
 @Injectable()
 export class DocumentService {

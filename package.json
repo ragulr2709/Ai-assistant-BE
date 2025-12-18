@@ -8,25 +8,24 @@
   "engines": {
     "node": ">=20 <21"
   },
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:render": "node --max-old-space-size=1024 dist/main",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main.js",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
-  },
+"scripts": {
+  "build": "tsc -p tsconfig.build.json",
+  "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+  "start": "node dist/main.js",
+  "start:prod": "node dist/main.js",
+  "start:dev": "nest start --watch",
+  "start:debug": "nest start --debug --watch",
+  "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+  "test": "jest",
+  "test:watch": "jest --watch",
+  "test:cov": "jest --coverage",
+  "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+  "test:e2e": "jest --config ./test/jest-e2e.json",
+  "db:generate": "drizzle-kit generate",
+  "db:migrate": "drizzle-kit migrate",
+  "db:push": "drizzle-kit push",
+  "db:studio": "drizzle-kit studio"
+},
   "dependencies": {
     "@google/generative-ai": "0.24.1",
     "@langchain/community": "^1.0.7",
