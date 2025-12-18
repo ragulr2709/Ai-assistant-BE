@@ -82,11 +82,33 @@ export class DocumentService {
     try {
       this.logger.log(`Processing document: ${documentId}`);
 
-      // Load and split PDF
-      const docs = await this.pdfLoaderService.loadAndSplitPdf(filePath);
+      // Stream pages and split in batches to avoid holding everything in memory.
+      const batchSize =
+        parseInt(this.configService.get<string>('RAG_BATCH_SIZE') || '50');
 
-      // Add documents to vector store
-      await this.vectorStoreService.addDocuments(documentId, docs);
+      const pages = await this.pdfLoaderService.loadPdfPages(filePath);
+
+      let batch: any[] = [];
+
+      for (const page of pages) {
+        const chunks = await this.pdfLoaderService.splitDocuments(page);
+
+        for (const chunk of chunks) {
+          // attach minimal metadata here; VectorStoreService will add more
+          batch.push({ ...chunk });
+
+          if (batch.length >= batchSize) {
+            this.logger.log(`Flushing batch of ${batch.length} chunks to vector store`);
+            await this.vectorStoreService.addDocuments(documentId, batch as any);
+            batch = [];
+          }
+        }
+      }
+
+      if (batch.length > 0) {
+        this.logger.log(`Flushing final batch of ${batch.length} chunks to vector store`);
+        await this.vectorStoreService.addDocuments(documentId, batch as any);
+      }
 
       // Update document status to completed
       await this.updateDocumentStatus(documentId, 'completed');

@@ -359,3 +359,21 @@ This project is licensed under the MIT License.
 ---
 
 **Built with ❤️ using NestJS, LangChain, and pgvector**
+
+## 🚢 Deploying to Render (notes)
+
+If you deploy this app to Render you may see an out-of-memory (OOM) crash during startup because the default Node memory is limited.
+
+Recommended Render settings:
+- Build Command: `yarn build`
+- Start Command: `yarn start:render`  # runs `node --max-old-space-size=1024 dist/main`
+- Environment variables: set `PORT`, `DATABASE_URL`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `JWT_SECRET` in the Render dashboard.
+
+If you still hit OOM, increase memory in the Start Command (in MB):
+`node --max-old-space-size=1536 dist/main`
+
+Local repro:
+1. Build: `yarn build`
+2. Run with increased memory: `node --max-old-space-size=1024 dist/main`
+
+Also ensure the app listens on `process.env.PORT` (this project already does in `src/main.ts`).

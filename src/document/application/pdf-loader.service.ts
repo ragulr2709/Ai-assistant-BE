@@ -32,6 +32,33 @@ export class PdfLoaderService {
     }
   }
 
+  // Load PDF pages without splitting them. Useful for streaming processing.
+  async loadPdfPages(filePath: string): Promise<any[]> {
+    try {
+      this.logger.log(`Loading PDF pages from: ${filePath}`);
+    const loader = new PDFLoader(filePath);
+    const pages: any[] = await loader.load();
+    this.logger.log(`Loaded ${pages.length} pages from PDF`);
+    return pages;
+    } catch (error) {
+      this.logger.error(`Error loading PDF pages: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  // Split an array of pages (or a single page) into chunks using the configured splitter.
+  async splitDocuments(docs: any[] | any): Promise<any[]> {
+    try {
+    const toSplit: any[] = Array.isArray(docs) ? docs : [docs];
+    const splitDocs: any[] = await this.textSplitter.splitDocuments(toSplit);
+    this.logger.log(`Split into ${splitDocs.length} chunks`);
+    return splitDocs;
+    } catch (error) {
+      this.logger.error(`Error splitting documents: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   async loadAndSplitPdfFromBuffer(buffer: Buffer, filename: string): Promise<Document[]> {
     try {
       this.logger.log(`Loading PDF from buffer: ${filename}`);
