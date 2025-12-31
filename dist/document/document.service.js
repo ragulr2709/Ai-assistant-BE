@@ -54,6 +54,7 @@ const drizzle_orm_1 = require("drizzle-orm");
 const schema_1 = require("../db/schema");
 const pdf_loader_service_1 = require("./application/pdf-loader.service");
 const vector_store_service_1 = require("./application/vector-store.service");
+const analytics_service_1 = require("../analytics/analytics.service");
 const fs = __importStar(require("fs/promises"));
 const path = __importStar(require("path"));
 const chats_1 = require("../db/chats");
@@ -61,13 +62,15 @@ let DocumentService = DocumentService_1 = class DocumentService {
     db;
     pdfLoaderService;
     vectorStoreService;
+    analyticsService;
     configService;
     logger = new common_1.Logger(DocumentService_1.name);
     uploadDir = './uploads';
-    constructor(db, pdfLoaderService, vectorStoreService, configService) {
+    constructor(db, pdfLoaderService, vectorStoreService, analyticsService, configService) {
         this.db = db;
         this.pdfLoaderService = pdfLoaderService;
         this.vectorStoreService = vectorStoreService;
+        this.analyticsService = analyticsService;
         this.configService = configService;
         this.ensureUploadDir();
     }
@@ -99,6 +102,11 @@ let DocumentService = DocumentService_1 = class DocumentService {
                 status: 'processing',
             })
                 .returning();
+            this.analyticsService.recordEvent({
+                userId,
+                eventType: 'document_uploaded',
+                eventPayload: { documentId: document.id, filename },
+            }).catch(() => { });
             this.processDocument(document.id, filePath).catch((error) => {
                 this.logger.error(`Error processing document ${document.id}: ${error.message}`);
                 this.updateDocumentStatus(document.id, 'failed', error.message);
@@ -132,6 +140,10 @@ let DocumentService = DocumentService_1 = class DocumentService {
                 await this.vectorStoreService.addDocuments(documentId, batch);
             }
             await this.updateDocumentStatus(documentId, 'completed');
+            this.analyticsService.recordEvent({
+                eventType: 'document_processed',
+                eventPayload: { documentId },
+            }).catch(() => { });
             this.logger.log(`Successfully processed document: ${documentId}`);
         }
         catch (error) {
@@ -215,6 +227,12 @@ let DocumentService = DocumentService_1 = class DocumentService {
                 await this.getDocument(documentId, userId);
             }
             const results = await this.vectorStoreService.similaritySearch(query, k, documentId);
+            this.analyticsService.recordEvent({
+                userId,
+                eventType: 'document_query',
+                eventPayload: { query, k, documentId, resultsCount: Array.isArray(results) ? results.length : 0 },
+                sessionId,
+            }).catch(() => { });
             await this.db.insert(chats_1.chatMessages).values({
                 sessionId: sessionId,
                 userId: userId,
@@ -255,6 +273,7 @@ exports.DocumentService = DocumentService = DocumentService_1 = __decorate([
     __metadata("design:paramtypes", [node_postgres_1.NodePgDatabase,
         pdf_loader_service_1.PdfLoaderService,
         vector_store_service_1.VectorStoreService,
+        analytics_service_1.AnalyticsService,
         config_1.ConfigService])
 ], DocumentService);
 //# sourceMappingURL=document.service.js.map

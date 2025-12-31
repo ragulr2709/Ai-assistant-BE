@@ -1,9 +1,11 @@
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
+import { AnalyticsService } from "../analytics/analytics.service";
 export declare class ChatService {
     private readonly db;
+    private readonly analyticsService;
     private readonly logger;
-    constructor(db: NodePgDatabase<typeof schema>);
+    constructor(db: NodePgDatabase<typeof schema>, analyticsService: AnalyticsService);
     getChatsByUserAndSession(userId: string, sessionId: string): Promise<{
         answer: string | null;
         question: string | null;

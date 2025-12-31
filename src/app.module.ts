@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './configs/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ModelValidatorService } from './gemini/model-validator.service';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { DbModule } from './db/drizzle.module';
@@ -31,6 +30,6 @@ import { AnalyticsModule } from './analytics/analytics.module';
   AnalyticsModule,
   ],
   controllers: [AppController, UserController],
-  providers: [AppService, UserService, ModelValidatorService],
+  providers: [AppService, UserService],
 })
 export class AppModule {}

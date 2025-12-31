@@ -18,11 +18,14 @@ const common_1 = require("@nestjs/common");
 const node_postgres_1 = require("drizzle-orm/node-postgres");
 const drizzle_orm_1 = require("drizzle-orm");
 const chats_1 = require("../db/chats");
+const analytics_service_1 = require("../analytics/analytics.service");
 let ChatService = ChatService_1 = class ChatService {
     db;
+    analyticsService;
     logger = new common_1.Logger(ChatService_1.name);
-    constructor(db) {
+    constructor(db, analyticsService) {
         this.db = db;
+        this.analyticsService = analyticsService;
     }
     async getChatsByUserAndSession(userId, sessionId) {
         try {
@@ -41,6 +44,12 @@ let ChatService = ChatService_1 = class ChatService {
                 return [];
             }
             this.logger.log(`Found ${chats.length} chats for user ${userId} and session ${sessionId}`);
+            this.analyticsService.recordEvent({
+                userId,
+                sessionId,
+                eventType: 'chats_fetched',
+                eventPayload: { count: chats.length },
+            }).catch(() => { });
             return chats;
         }
         catch (error) {
@@ -83,6 +92,7 @@ exports.ChatService = ChatService;
 exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)("DRIZZLE")),
-    __metadata("design:paramtypes", [node_postgres_1.NodePgDatabase])
+    __metadata("design:paramtypes", [node_postgres_1.NodePgDatabase,
+        analytics_service_1.AnalyticsService])
 ], ChatService);
 //# sourceMappingURL=chat.services.js.map

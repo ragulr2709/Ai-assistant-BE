@@ -9,10 +9,7 @@ exports.default = () => ({
     gemini: {
         apiKey: process.env.GEMINI_API_KEY || '',
         embeddingModel: process.env.GEMINI_TEXT_EMBEDDING_MODEL || 'text-embedding-004',
-    // Prefer leaving generationModel empty by default (disable remote generation)
-    // or set via GEMINI_GENERATION_MODEL. This prevents calls to deprecated
-    // 'text-bison-001' by default.
-    generationModel: process.env.GEMINI_GENERATION_MODEL || '',
+        generationModel: process.env.GEMINI_GENERATION_MODEL || '',
     },
     jwt: {
         secret: process.env.JWT_SECRET || 'your-secret-key',

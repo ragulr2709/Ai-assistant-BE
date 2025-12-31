@@ -92,26 +92,63 @@ let VectorStoreService = VectorStoreService_1 = class VectorStoreService {
                 return { answer: "No relevant information found.", sources: [] };
             }
             const genAI = new generative_ai_1.GoogleGenerativeAI(this.configService.get("gemini.apiKey") || "");
-            const generationModel = this.configService.get("gemini.generationModel") ||
-                // Default to empty to disable remote generation by default in built code,
-                // or set GEMINI_GENERATION_MODEL to a supported model (e.g. 'gemini-3').
-                "";
-            const model = genAI.getGenerativeModel({ model: generationModel });
+            let generationModel = this.configService.get("gemini.generationModel");
+            const pickModelFromList = async (genAIClient) => {
+                if (!genAIClient || typeof genAIClient.listModels !== 'function')
+                    return undefined;
+                try {
+                    const list = await genAIClient.listModels();
+                    const models = Array.isArray(list?.models) ? list.models : Array.isArray(list) ? list : [];
+                    const preferred = ['gemini-3', 'gemini-2.5', 'gemini-2.5-pro'];
+                    for (const p of preferred) {
+                        const m = models.find((mm) => (mm?.name || mm?.id || String(mm)).includes(p));
+                        if (m)
+                            return m.name || m.id || `models/${p}`;
+                    }
+                    const fallback = models.find((mm) => (mm?.name || mm?.id || '').toLowerCase().includes('gemini') || (mm?.name || mm?.id || '').toLowerCase().includes('bison'));
+                    if (fallback)
+                        return fallback.name || fallback.id || undefined;
+                    return undefined;
+                }
+                catch (e) {
+                    this.logger.warn('ListModels call failed when trying to auto-select a generation model: ' + (e?.message || String(e)));
+                    return undefined;
+                }
+            };
+            if (!generationModel || generationModel === 'latest') {
+                try {
+                    const pick = await pickModelFromList(genAI);
+                    if (pick) {
+                        generationModel = pick;
+                        this.logger.log(`Auto-selected generation model: ${generationModel}`);
+                    }
+                    else {
+                        generationModel = 'gemini-3';
+                        this.logger.log(`No suitable model found via ListModels; defaulting to ${generationModel}`);
+                    }
+                }
+                catch (e) {
+                    generationModel = 'gemini-3';
+                    this.logger.warn('Auto-selection failed; using default model gemini-3');
+                }
+            }
+            if (generationModel && !generationModel.startsWith('models/')) {
+                generationModel = `models/${generationModel}`;
+            }
             const context = filteredResults
                 .map((doc) => doc.pageContent)
                 .join("\n\n");
             const prompt = `
         You are an expert AI assistant.
-  
+
         Question: ${query}
-  
+
         Context:
         ${context}
-  
+
         Provide a clear, exact, and concise answer based strictly on the context.
         Do NOT make up anything that is not in the context.
       `;
-            const result = await model.generateContent(prompt);
             const extractText = (res) => {
                 const r = res;
                 if (r?.response && typeof r.response.text === "function") {
@@ -129,11 +166,32 @@ let VectorStoreService = VectorStoreService_1 = class VectorStoreService {
                 }
                 return undefined;
             };
-            const answer = extractText(result) || "No answer generated.";
-            return {
-                answer,
-                sources: filteredResults,
-            };
+            if (!generationModel) {
+                this.logger.warn('Generation model explicitly disabled; returning context as fallback answer.');
+                return { answer: context || 'No relevant information found.', sources: filteredResults };
+            }
+            let answer = 'No answer generated.';
+            try {
+                const model = genAI.getGenerativeModel({ model: generationModel });
+                const result = await model.generateContent(prompt);
+                const text = extractText(result);
+                if (text) {
+                    answer = text;
+                }
+                else {
+                    this.logger.warn(`Generation returned empty response for model ${generationModel}; falling back to context.`);
+                    answer = context || answer;
+                }
+            }
+            catch (genErr) {
+                this.logger.error(`Generation failed for model ${generationModel}: ${genErr?.message || genErr}`);
+                if (genErr?.status === 404) {
+                    this.logger.error(`Model ${generationModel} not found or not available for this API version. ` +
+                        `Set GEMINI_GENERATION_MODEL to a supported name (for example 'gemini-3' or 'gemini-2.5', or full 'models/gemini-3'), or leave it empty to disable generation.`);
+                }
+                answer = context || answer;
+            }
+            return { answer, sources: filteredResults };
         }
         catch (err) {
             const error = err instanceof Error ? err : new Error(String(err));

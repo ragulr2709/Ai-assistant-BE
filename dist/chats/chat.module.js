@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const chat_controller_1 = require("./chat.controller");
 const chat_services_1 = require("./chat.services");
 const drizzle_module_1 = require("../db/drizzle.module");
+const analytics_module_1 = require("../analytics/analytics.module");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
-        imports: [drizzle_module_1.DbModule],
+        imports: [drizzle_module_1.DbModule, analytics_module_1.AnalyticsModule],
         controllers: [chat_controller_1.ChatController],
         providers: [chat_services_1.ChatService],
         exports: [chat_services_1.ChatService],

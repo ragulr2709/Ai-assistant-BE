@@ -24,6 +24,7 @@ const knowledge_base_module_1 = require("./knowledge-base/knowledge-base.module"
 const agent_module_1 = require("./agent/agent.module");
 const document_module_1 = require("./document/document.module");
 const chat_module_1 = require("./chats/chat.module");
+const analytics_module_1 = require("./analytics/analytics.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -41,6 +42,7 @@ exports.AppModule = AppModule = __decorate([
             agent_module_1.AgentModule,
             document_module_1.DocumentModule,
             chat_module_1.ChatModule,
+            analytics_module_1.AnalyticsModule,
         ],
         controllers: [app_controller_1.AppController, user_controller_1.UserController],
         providers: [app_service_1.AppService, user_service_1.UserService],

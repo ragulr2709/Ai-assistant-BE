@@ -15,12 +15,13 @@ const pdf_loader_service_1 = require("./application/pdf-loader.service");
 const vector_store_service_1 = require("./application/vector-store.service");
 const document_retriever_tool_service_1 = require("./application/document-retriever-tool.service");
 const drizzle_module_1 = require("../db/drizzle.module");
+const analytics_module_1 = require("../analytics/analytics.module");
 let DocumentModule = class DocumentModule {
 };
 exports.DocumentModule = DocumentModule;
 exports.DocumentModule = DocumentModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule, drizzle_module_1.DbModule],
+        imports: [config_1.ConfigModule, drizzle_module_1.DbModule, analytics_module_1.AnalyticsModule],
         controllers: [document_controller_1.DocumentController],
         providers: [
             document_service_1.DocumentService,
