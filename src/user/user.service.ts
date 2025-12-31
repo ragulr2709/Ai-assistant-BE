@@ -27,6 +27,7 @@ export class UserService {
           name: dto.name,
           email: dto.email,
           password: dto.password,
+          role: dto.role,
         })
         .returning();
       return newUser;

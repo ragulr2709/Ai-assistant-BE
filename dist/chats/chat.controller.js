@@ -34,7 +34,7 @@ let ChatController = class ChatController {
     }
     async getChatsBySession(sessionId) {
         if (!sessionId) {
-            throw new Error('sessionId is required');
+            throw new Error("sessionId is required");
         }
         return this.chatService.getChatsBySession(sessionId);
     }
@@ -43,20 +43,20 @@ exports.ChatController = ChatController;
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('sessionId')),
+    __param(1, (0, common_1.Query)("sessionId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getChats", null);
 __decorate([
-    (0, common_1.Get)('session'),
-    __param(0, (0, common_1.Query)('sessionId')),
+    (0, common_1.Get)("session"),
+    __param(0, (0, common_1.Query)("sessionId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getChatsBySession", null);
 exports.ChatController = ChatController = __decorate([
-    (0, common_1.Controller)('chats'),
+    (0, common_1.Controller)("chats"),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [chat_services_1.ChatService])
 ], ChatController);

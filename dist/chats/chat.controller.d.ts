@@ -1,4 +1,4 @@
-import { ChatService } from './chat.services';
+import { ChatService } from "./chat.services";
 export declare class ChatController {
     private readonly chatService;
     constructor(chatService: ChatService);

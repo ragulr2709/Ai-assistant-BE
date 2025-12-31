@@ -12,6 +12,14 @@ export default () => ({
     generationModel:
       process.env.GEMINI_GENERATION_MODEL || 'models/text-bison-001',
   },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'your-secret-key',
+    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+  },
+  refresh: {
+    // Refresh tokens are long-lived; rotate on use
+    expiresInDays: parseInt(process.env.REFRESH_EXPIRES_DAYS || '30', 10),
+  },
   swagger: {
     title: process.env.SWAGGER_TITLE || '',
     description: process.env.SWAGGER_DESCRIPTION || '',

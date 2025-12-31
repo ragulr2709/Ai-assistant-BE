@@ -7,6 +7,14 @@ declare const _default: () => {
     gemini: {
         apiKey: string;
         embeddingModel: string;
+        generationModel: string;
+    };
+    jwt: {
+        secret: string;
+        expiresIn: string;
+    };
+    refresh: {
+        expiresInDays: number;
     };
     swagger: {
         title: string;

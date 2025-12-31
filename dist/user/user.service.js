@@ -30,7 +30,7 @@ let UserService = class UserService {
                 .where((0, drizzle_orm_1.eq)(schema_1.users.email, dto.email))
                 .limit(1);
             if (isExistingUser.length) {
-                throw new Error('User with this email already exists');
+                throw new Error("User with this email already exists");
             }
             const newUser = await this.db
                 .insert(schema_1.users)
@@ -38,12 +38,13 @@ let UserService = class UserService {
                 name: dto.name,
                 email: dto.email,
                 password: dto.password,
+                role: dto.role,
             })
                 .returning();
             return newUser;
         }
         catch (err) {
-            console.error('Error creating user:', err);
+            console.error("Error creating user:", err);
             throw err;
         }
     }

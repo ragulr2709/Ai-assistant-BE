@@ -1,5 +1,5 @@
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '../db/schema';
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "../db/schema";
 export declare class ChatService {
     private readonly db;
     private readonly logger;

@@ -32,6 +32,12 @@ export class AuthController {
     return this.authService.login(loginDto.email, loginDto.password);
   }
 
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() body: { email: string; refresh_token: string }) {
+    return this.authService.refresh(body.email, body.refresh_token);
+  }
+
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   getProfile(@Request() req) {
@@ -40,5 +46,14 @@ export class AuthController {
       message: 'This is a protected route',
       user: req.user,
     };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async logout(@Request() req) {
+    // revoke refresh token for the authenticated user
+    await this.authService.revokeRefreshToken(req.user.id);
+    return { ok: true };
   }
 }

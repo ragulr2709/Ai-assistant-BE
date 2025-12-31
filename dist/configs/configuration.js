@@ -9,6 +9,14 @@ exports.default = () => ({
     gemini: {
         apiKey: process.env.GEMINI_API_KEY || '',
         embeddingModel: process.env.GEMINI_TEXT_EMBEDDING_MODEL || 'text-embedding-004',
+        generationModel: process.env.GEMINI_GENERATION_MODEL || 'models/text-bison-001',
+    },
+    jwt: {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    },
+    refresh: {
+        expiresInDays: parseInt(process.env.REFRESH_EXPIRES_DAYS || '30', 10),
     },
     swagger: {
         title: process.env.SWAGGER_TITLE || '',

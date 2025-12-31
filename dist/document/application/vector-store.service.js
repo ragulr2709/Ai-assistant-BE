@@ -91,12 +91,12 @@ let VectorStoreService = VectorStoreService_1 = class VectorStoreService {
             if (filteredResults.length === 0) {
                 return { answer: "No relevant information found.", sources: [] };
             }
-            const genAI = new generative_ai_1.GoogleGenerativeAI(this.configService.get('gemini.apiKey') || '');
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
-            });
+            const genAI = new generative_ai_1.GoogleGenerativeAI(this.configService.get("gemini.apiKey") || "");
+            const generationModel = this.configService.get("gemini.generationModel") ||
+                "models/text-bison-001";
+            const model = genAI.getGenerativeModel({ model: generationModel });
             const context = filteredResults
-                .map(doc => doc.pageContent)
+                .map((doc) => doc.pageContent)
                 .join("\n\n");
             const prompt = `
         You are an expert AI assistant.
@@ -110,13 +110,31 @@ let VectorStoreService = VectorStoreService_1 = class VectorStoreService {
         Do NOT make up anything that is not in the context.
       `;
             const result = await model.generateContent(prompt);
-            const answer = result.response.text();
+            const extractText = (res) => {
+                const r = res;
+                if (r?.response && typeof r.response.text === "function") {
+                    try {
+                        return r.response.text();
+                    }
+                    catch {
+                    }
+                }
+                if (Array.isArray(r?.candidates) && r.candidates[0]?.content) {
+                    return r.candidates[0].content;
+                }
+                if (r?.output && typeof r.output === "string") {
+                    return r.output;
+                }
+                return undefined;
+            };
+            const answer = extractText(result) || "No answer generated.";
             return {
                 answer,
                 sources: filteredResults,
             };
         }
-        catch (error) {
+        catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err));
             this.logger.error(`Error performing similarity search: ${error.message}`, error.stack);
             throw error;
         }

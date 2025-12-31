@@ -7,5 +7,7 @@ exports.users = (0, pg_core_1.pgTable)('users', {
     name: (0, pg_core_1.text)('name').notNull(),
     email: (0, pg_core_1.text)('email').notNull().unique(),
     password: (0, pg_core_1.text)('password').notNull(),
+    role: (0, pg_core_1.text)('role').notNull().default('user'),
+    refresh_token: (0, pg_core_1.text)('refresh_token'),
 });
 //# sourceMappingURL=user.js.map

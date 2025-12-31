@@ -32,7 +32,7 @@ let ChatService = ChatService_1 = class ChatService {
                 answer: chats_1.chatMessages.answer,
                 question: chats_1.chatMessages.question,
                 sessionId: chats_1.chatMessages.sessionId,
-                userId: chats_1.chatMessages.userId
+                userId: chats_1.chatMessages.userId,
             })
                 .from(chats_1.chatMessages)
                 .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(chats_1.chatMessages.userId, userId), (0, drizzle_orm_1.eq)(chats_1.chatMessages.sessionId, sessionId)));
@@ -82,7 +82,7 @@ let ChatService = ChatService_1 = class ChatService {
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Inject)('DRIZZLE')),
+    __param(0, (0, common_1.Inject)("DRIZZLE")),
     __metadata("design:paramtypes", [node_postgres_1.NodePgDatabase])
 ], ChatService);
 //# sourceMappingURL=chat.services.js.map

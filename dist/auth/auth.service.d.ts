@@ -12,11 +12,20 @@ export declare class AuthService {
     findUserByEmail(email: string): Promise<any>;
     login(email: string, password: string): Promise<{
         access_token: string;
+        refresh_token: `${string}-${string}-${string}-${string}-${string}`;
         user: {
             id: any;
             name: any;
             email: any;
         };
     }>;
+    refresh(email: string, refreshToken: string): Promise<{
+        access_token: string;
+        refresh_token: `${string}-${string}-${string}-${string}-${string}`;
+    }>;
+    revokeRefreshToken(userId: string): Promise<{
+        revoked: boolean;
+    }>;
+    private hashToken;
 }
 export {};

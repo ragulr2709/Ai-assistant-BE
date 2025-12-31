@@ -18,6 +18,7 @@ const jwt_1 = require("@nestjs/jwt");
 const schema_1 = require("../db/schema");
 const drizzle_module_1 = require("../db/drizzle.module");
 const drizzle_orm_1 = require("drizzle-orm");
+const node_crypto_1 = require("node:crypto");
 let AuthService = class AuthService {
     jwtService;
     db;
@@ -58,14 +59,53 @@ let AuthService = class AuthService {
             sub: user.id,
             email: user.email,
         };
+        const refreshToken = (0, node_crypto_1.randomUUID)();
+        const hashed = this.hashToken(refreshToken);
+        await this.db
+            .update(schema_1.users)
+            .set({ refresh_token: hashed })
+            .where((0, drizzle_orm_1.eq)(schema_1.users.id, user.id));
         return {
             access_token: this.jwtService.sign(payload),
+            refresh_token: refreshToken,
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
             },
         };
+    }
+    async refresh(email, refreshToken) {
+        if (!refreshToken)
+            throw new common_1.BadRequestException('Refresh token missing');
+        const user = await this.db
+            .select()
+            .from(schema_1.users)
+            .where((0, drizzle_orm_1.eq)(schema_1.users.email, email))
+            .limit(1);
+        if (!user.length)
+            throw new common_1.UnauthorizedException('User not found');
+        const storedHashed = user[0].refresh_token;
+        if (!storedHashed)
+            throw new common_1.UnauthorizedException('No refresh token stored');
+        if (this.hashToken(refreshToken) !== storedHashed) {
+            throw new common_1.UnauthorizedException('Invalid refresh token');
+        }
+        const payload = { sub: user[0].id, email: user[0].email };
+        const newRefresh = (0, node_crypto_1.randomUUID)();
+        const newHashed = this.hashToken(newRefresh);
+        await this.db.update(schema_1.users).set({ refresh_token: newHashed }).where((0, drizzle_orm_1.eq)(schema_1.users.id, user[0].id));
+        return {
+            access_token: this.jwtService.sign(payload),
+            refresh_token: newRefresh,
+        };
+    }
+    async revokeRefreshToken(userId) {
+        await this.db.update(schema_1.users).set({ refresh_token: null }).where((0, drizzle_orm_1.eq)(schema_1.users.id, userId));
+        return { revoked: true };
+    }
+    hashToken(token) {
+        return (0, node_crypto_1.createHash)('sha256').update(token).digest('hex');
     }
 };
 exports.AuthService = AuthService;
