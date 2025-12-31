@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './configs/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ModelValidatorService } from './gemini/model-validator.service';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { DbModule } from './db/drizzle.module';
@@ -12,6 +13,7 @@ import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
 import { AgentModule } from './agent/agent.module';
 import { DocumentModule } from './document/document.module';
 import { ChatModule } from './chats/chat.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -25,9 +27,10 @@ import { ChatModule } from './chats/chat.module';
     KnowledgeBaseModule,
     AgentModule,
     DocumentModule,
-    ChatModule,
+  ChatModule,
+  AnalyticsModule,
   ],
   controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  providers: [AppService, UserService, ModelValidatorService],
 })
 export class AppModule {}

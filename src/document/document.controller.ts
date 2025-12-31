@@ -36,7 +36,7 @@ export class DocumentController {
       throw new BadRequestException('No file uploaded');
     }
 
-    return this.documentService.uploadDocument(file, "eea8efc5-6ee5-4a0c-b665-5bb7be93b298");
+  return this.documentService.uploadDocument(file, req.user?.id);
   }
 
   @Get()

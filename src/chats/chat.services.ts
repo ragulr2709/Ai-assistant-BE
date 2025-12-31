@@ -3,6 +3,7 @@ import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { eq, and } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { chatMessages } from "../db/chats";
+import { AnalyticsService } from "../analytics/analytics.service";
 
 @Injectable()
 export class ChatService {
@@ -10,6 +11,7 @@ export class ChatService {
 
   constructor(
     @Inject("DRIZZLE") private readonly db: NodePgDatabase<typeof schema>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async getChatsByUserAndSession(userId: string, sessionId: string) {
@@ -43,6 +45,14 @@ export class ChatService {
       this.logger.log(
         `Found ${chats.length} chats for user ${userId} and session ${sessionId}`,
       );
+
+      // record analytics
+      this.analyticsService.recordEvent({
+        userId,
+        sessionId,
+        eventType: 'chats_fetched',
+        eventPayload: { count: chats.length },
+      }).catch(() => {});
       return chats;
     } catch (error) {
       this.logger.error(`Error fetching chats: ${error.message}`, error.stack);

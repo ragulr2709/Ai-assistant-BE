@@ -114,36 +114,84 @@ export class VectorStoreService {
         this.configService.get<string>("gemini.apiKey") || "",
       );
 
-      // Use a config-driven model name with a safe default that is supported
-      // by the Google Generative AI API for text generation.
-      const generationModel =
-        this.configService.get<string>("gemini.generationModel") ||
-        // "models/text-bison-001" is a stable text generation model name supported
-        // by Google Generative AI. Adjust via env GEMINI_GENERATION_MODEL if needed.
-        "models/text-bison-001";
+  // Use a config-driven model name with a safe default that is supported
+  // by the Google Generative AI API for text generation.
+  // Read configured model. Accept short name like `gemini-3` or `gemini-2.5`,
+  // resource name `models/...`, or the special value `latest` (or unset)
+  // which will attempt to pick a supported Gemini model at runtime by
+  // calling ListModels.
+      let generationModel = this.configService.get<string>("gemini.generationModel");
 
-      const model = genAI.getGenerativeModel({ model: generationModel });
-  
-      const context = filteredResults
+      // Helper: try to pick a supported model via ListModels
+      const pickModelFromList = async (genAIClient: any): Promise<string | undefined> => {
+        if (!genAIClient || typeof genAIClient.listModels !== 'function') return undefined;
+        try {
+          const list = await genAIClient.listModels();
+          // list may have different shapes; try common fields
+          const models = Array.isArray(list?.models) ? list.models : Array.isArray(list) ? list : [];
+
+          // preference order for Gemini models (short names)
+          // Prefer recent Gemini releases (3 then 2.5). Older 1.x models are
+          // deprecated and not included here.
+          const preferred = ['gemini-3', 'gemini-2.5', 'gemini-2.5-pro'];
+
+          for (const p of preferred) {
+            const m = models.find((mm: any) => (mm?.name || mm?.id || String(mm)).includes(p));
+            if (m) return m.name || m.id || `models/${p}`;
+          }
+
+          // otherwise pick first model that looks like 'gemini' or 'bison'
+          const fallback = models.find((mm: any) => (mm?.name || mm?.id || '').toLowerCase().includes('gemini') || (mm?.name || mm?.id || '').toLowerCase().includes('bison'));
+          if (fallback) return fallback.name || fallback.id || undefined;
+
+          return undefined;
+        } catch (e) {
+          this.logger.warn('ListModels call failed when trying to auto-select a generation model: ' + (e?.message || String(e)));
+          return undefined;
+        }
+      };
+
+      // If explicitly set to "latest" or not provided, attempt to auto-select.
+      if (!generationModel || generationModel === 'latest') {
+        try {
+          const pick = await pickModelFromList(genAI);
+          if (pick) {
+            generationModel = pick;
+            this.logger.log(`Auto-selected generation model: ${generationModel}`);
+          } else {
+            // if no model found, fall back to a reasonable default
+            generationModel = 'gemini-3';
+            this.logger.log(`No suitable model found via ListModels; defaulting to ${generationModel}`);
+          }
+        } catch (e) {
+          generationModel = 'gemini-3';
+          this.logger.warn('Auto-selection failed; using default model gemini-3');
+        }
+      }
+
+      // Normalize to a form prefixed with 'models/' if not already present.
+      if (generationModel && !generationModel.startsWith('models/')) {
+        generationModel = `models/${generationModel}`;
+      }
+
+  const context = filteredResults
         .map((doc) => doc.pageContent)
         .join("\n\n");
-  
+
       const prompt = `
         You are an expert AI assistant.
-  
+
         Question: ${query}
-  
+
         Context:
         ${context}
-  
+
         Provide a clear, exact, and concise answer based strictly on the context.
         Do NOT make up anything that is not in the context.
       `;
-  
+
       // generateContent returns a structured result; use .response.text() when
       // available but guard for other response shapes.
-      const result = await model.generateContent(prompt);
-      // Helper: attempt to extract text from known response shapes
       const extractText = (res: unknown): string | undefined => {
         const r = res as any;
         if (r?.response && typeof r.response.text === "function") {
@@ -162,12 +210,42 @@ export class VectorStoreService {
         return undefined;
       };
 
-      const answer = extractText(result) || "No answer generated.";
-  
-      return {
-        answer,
-        sources: filteredResults,
-      };
+      // If generation model is not configured, return the joined context as
+      // a safe fallback (the UI can present this as sources/extract).
+      if (!generationModel) {
+        this.logger.warn('Generation model explicitly disabled; returning context as fallback answer.');
+        return { answer: context || 'No relevant information found.', sources: filteredResults };
+      }
+
+      // Otherwise attempt generation but guard failures and fallback to context.
+      let answer = 'No answer generated.';
+      try {
+        const model = genAI.getGenerativeModel({ model: generationModel });
+        const result = await model.generateContent(prompt);
+        const text = extractText(result);
+        if (text) {
+          answer = text;
+        } else {
+          this.logger.warn(`Generation returned empty response for model ${generationModel}; falling back to context.`);
+          answer = context || answer;
+        }
+      } catch (genErr: any) {
+        // Known failure mode: 404 when model name isn't available for the SDK
+        // or API version. Log details and fall back to returning the context.
+        this.logger.error(
+          `Generation failed for model ${generationModel}: ${genErr?.message || genErr}`,
+        );
+        // If the error contains status 404, surface a helpful log message.
+        if (genErr?.status === 404) {
+          this.logger.error(
+            `Model ${generationModel} not found or not available for this API version. ` +
+              `Set GEMINI_GENERATION_MODEL to a supported name (for example 'gemini-3' or 'gemini-2.5', or full 'models/gemini-3'), or leave it empty to disable generation.`,
+          );
+        }
+        answer = context || answer;
+      }
+
+      return { answer, sources: filteredResults };
   
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));

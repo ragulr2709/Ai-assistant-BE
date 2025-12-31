@@ -6,9 +6,10 @@ import { PdfLoaderService } from './application/pdf-loader.service';
 import { VectorStoreService } from './application/vector-store.service';
 import { DocumentRetrieverToolService } from './application/document-retriever-tool.service';
 import { DbModule } from '../db/drizzle.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
-  imports: [ConfigModule, DbModule],
+  imports: [ConfigModule, DbModule, AnalyticsModule],
   controllers: [DocumentController],
   providers: [
     DocumentService,

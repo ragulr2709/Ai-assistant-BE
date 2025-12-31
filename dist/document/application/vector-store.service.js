@@ -93,7 +93,9 @@ let VectorStoreService = VectorStoreService_1 = class VectorStoreService {
             }
             const genAI = new generative_ai_1.GoogleGenerativeAI(this.configService.get("gemini.apiKey") || "");
             const generationModel = this.configService.get("gemini.generationModel") ||
-                "models/text-bison-001";
+                // Default to empty to disable remote generation by default in built code,
+                // or set GEMINI_GENERATION_MODEL to a supported model (e.g. 'gemini-3').
+                "";
             const model = genAI.getGenerativeModel({ model: generationModel });
             const context = filteredResults
                 .map((doc) => doc.pageContent)

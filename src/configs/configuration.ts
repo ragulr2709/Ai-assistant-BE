@@ -8,9 +8,9 @@ export default () => ({
     apiKey: process.env.GEMINI_API_KEY || '',
     embeddingModel:
       process.env.GEMINI_TEXT_EMBEDDING_MODEL || 'text-embedding-004',
-    // Model used for text generation. Can be overridden with GEMINI_GENERATION_MODEL env var.
-    generationModel:
-      process.env.GEMINI_GENERATION_MODEL || 'models/text-bison-001',
+  // Model used for text generation. Can be overridden with GEMINI_GENERATION_MODEL env var.
+  // Default is empty which disables remote generation and returns context as fallback.
+  generationModel: process.env.GEMINI_GENERATION_MODEL || '',
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'your-secret-key',

@@ -6,6 +6,7 @@ import * as schema from '../db/schema';
 import { documents, documentChunks } from '../db/schema';
 import { PdfLoaderService } from './application/pdf-loader.service';
 import { VectorStoreService } from './application/vector-store.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { DocumentResponseDto, QueryResultDto } from './dto/document-response.dto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -18,8 +19,9 @@ export class DocumentService {
 
   constructor(
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
-    private readonly pdfLoaderService: PdfLoaderService,
-    private readonly vectorStoreService: VectorStoreService,
+  private readonly pdfLoaderService: PdfLoaderService,
+  private readonly vectorStoreService: VectorStoreService,
+  private readonly analyticsService: AnalyticsService,
     private readonly configService: ConfigService,
   ) {
     this.ensureUploadDir();
@@ -64,6 +66,13 @@ export class DocumentService {
           status: 'processing',
         })
         .returning();
+
+      // Record analytics event for upload
+      this.analyticsService.recordEvent({
+        userId,
+        eventType: 'document_uploaded',
+        eventPayload: { documentId: document.id, filename },
+      }).catch(() => {});
 
       // Process document asynchronously
       this.processDocument(document.id, filePath).catch((error) => {
@@ -112,6 +121,12 @@ export class DocumentService {
 
       // Update document status to completed
       await this.updateDocumentStatus(documentId, 'completed');
+
+      // Record analytics event for processing completed
+      this.analyticsService.recordEvent({
+        eventType: 'document_processed',
+        eventPayload: { documentId },
+      }).catch(() => {});
 
       this.logger.log(`Successfully processed document: ${documentId}`);
     } catch (error) {
@@ -227,6 +242,13 @@ export class DocumentService {
         documentId,
       );
 
+      // Record analytics event for query
+      this.analyticsService.recordEvent({
+        userId,
+        eventType: 'document_query',
+        eventPayload: { query, k, documentId, resultsCount: Array.isArray(results) ? results.length : 0 },
+        sessionId,
+      }).catch(() => {});
       await this.db.insert(chatMessages).values({
         sessionId: sessionId,
         userId: userId,
