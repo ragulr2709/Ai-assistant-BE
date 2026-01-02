@@ -3,10 +3,11 @@ import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
 import { analyticsEvents } from "../db/analytics";
 import { sql } from "drizzle-orm";
+import { DRIZZLE } from "../db/drizzle.module";
 
 @Injectable()
 export class AnalyticsService {
-  constructor(@Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>) {}
+  constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof schema>) {}
 
   async recordEvent(event: {
     userId?: string;
